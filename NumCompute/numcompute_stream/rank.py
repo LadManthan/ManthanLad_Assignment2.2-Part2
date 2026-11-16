@@ -5,8 +5,7 @@ class Ranker:
     """
     Rank values and calculate percentiles from one-dimensional data.
 
-    Values are converted to numbers. Items that cannot be converted are treated
-    like missing values and receive the lowest rank; percentiles ignore them.
+    Values are converted to numbers. Items that cannot be converted are treated like missing values and receive the lowest rank; percentiles ignore them.
     """
 
     # Convert mixed input to numbers before either ranking or calculating percentiles.

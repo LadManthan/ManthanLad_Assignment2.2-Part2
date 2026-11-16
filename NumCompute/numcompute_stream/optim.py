@@ -28,8 +28,7 @@ def grad(
     Returns
     -------
     float or numpy.ndarray
-        Estimated derivative for a scalar input, or gradient vector
-        with the same shape as an array input.
+        Estimated derivative for a scalar input, or gradient vector with the same shape as an array input.
 
     Raises
     ------

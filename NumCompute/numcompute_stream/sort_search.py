@@ -189,7 +189,6 @@ def quickselect(
 
     remaining = arr
     while True:
-        # Keep only the side of the pivot where the requested rank can still be.
         pivot = remaining[len(remaining) // 2]
         left = remaining[remaining < pivot]
         equal = remaining[remaining == pivot]
