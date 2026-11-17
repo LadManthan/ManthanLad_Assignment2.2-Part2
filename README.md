@@ -1,22 +1,23 @@
 # NumCompute
 
-NumCompute is a numerical computing toolkit implemented using **plain Python and NumPy**.
+NumCompute is an educational numerical computing toolkit built primarily with **Python and NumPy**. Matplotlib is used for plotting and histogram display.
 
-The project implements numerical data loading, preprocessing, sorting and searching, ranking, statistics, evaluation metrics, finite-difference differentiation, and pipeline functionality.
+The project includes batch-oriented numerical utilities and a separate set of streaming components for processing data in chunks.
 
-External machine learning/deep learning libraries such as **scikit-learn, Pandas and PyTorch are not used**.
+It does not depend on scikit-learn, pandas, or PyTorch.
 
 ---
 
 ## Features
 
-- Load CSV files and process large files in chunks.
-- Impute missing values, scale numerical features, and encode categorical values.
-- Sort, search, rank, and select values.
-- Calculate descriptive statistics, quantiles, percentiles, and histograms.
-- Evaluate classification and regression predictions.
+- Load CSV data either all at once or in bounded-size chunks.
+- Preprocess numeric and categorical features with imputers, scalers, and encoders.
+- Sort, search, select, rank, and calculate descriptive statistics.
+- Calculate classification and regression metrics, including streaming metrics.
 - Estimate gradients and Jacobians using finite differences.
-- Compose preprocessing steps into reusable pipelines.
+- Compose transformers and estimators into pipelines, including incremental pipelines.
+- Train and evaluate a buffered decision tree over data streams.
+- Visualize histograms, stream metrics, predictions, and decision trees.
 - Benchmark Python and NumPy implementations.
 
 ---
@@ -28,8 +29,20 @@ The tree below shows the project layout and modules.
 ```text
 .
 ├── NumCompute/
-│   └── numcompute/
-│       ├── __init__.py
+│   ├── numcompute/
+│   │   ├── __init__.py
+│   │   ├── io.py
+│   │   ├── preprocessing.py
+│   │   ├── sort_search.py
+│   │   ├── rank.py
+│   │   ├── stats.py
+│   │   ├── metrics.py
+│   │   ├── optim.py
+│   │   ├── pipeline.py
+│   │   ├── utils.py
+│   │   ├── histogram_display.py
+│   │   └── benchmarking.py
+│   └── numcompute_stream/
 │       ├── io.py
 │       ├── preprocessing.py
 │       ├── sort_search.py
@@ -38,27 +51,43 @@ The tree below shows the project layout and modules.
 │       ├── metrics.py
 │       ├── optim.py
 │       ├── pipeline.py
+│       ├── tree.py
+│       ├── stream.py
 │       ├── utils.py
+│       ├── visualise.py
 │       └── benchmarking.py
 ├── tests/
 │   ├── test_io.py
-│   ├── test_preprocessing.py 
+│   ├── test_preprocessing.py
 │   ├── test_sort_search.py
-│   ├── test_rank_stats.py
+│   ├── test_rank.py
+│   ├── test_stats.py
 │   ├── test_metrics.py
 │   ├── test_optim.py
 │   ├── test_pipeline.py
 │   ├── test_utils.py
 │   ├── test_benchmarking.py
-│   └── test_streaming_and_package.py
+│   ├── test_stream_benchmark.py
+│   ├── test_stream_metrics.py
+│   ├── test_stream_pipeline.py
+│   ├── test_stream_preprocessing.py
+│   ├── test_stream_stats.py
+│   ├── test_stream_tree.py
+│   ├── test_stream_utils.py
+│   └── test_stream_visualise.py
+├── benchmark/
+│   └── benchmark.py
 ├── demo/
-│   └── quickstart.ipynb
+│   ├── quickstart.ipynb
+│   └── stream_demo.ipynb
 ├── requirements.txt
 ├── requirements-dev.txt
-├── .gitignore
-├── README.md
 ├── pyproject.toml
-└── CODING_STYLE.md
+├── CODING_STYLE.md
+├── .github/
+│   └── workflows/
+│       └── pytest.yml
+└── README.md
 ```
 
 ---
@@ -66,13 +95,10 @@ The tree below shows the project layout and modules.
 ## Requirements
 
 * Python 3.10 or newer
-* NumPy (installed from `requirements.txt`)
-* Plain Python standard library where required
+* NumPy and Matplotlib (installed from `requirements.txt`)
+* Pytest for development and tests (installed from `requirements-dev.txt`)
 
-The project does not uses any external ML/DL libraries such as:
-* scikit-learn
-* pandas
-* PyTorch
+The core numerical algorithms are implemented in the project; the toolkit does not use external ML/DL libraries such as scikit-learn, pandas, or PyTorch.
 
 ---
 
@@ -81,13 +107,13 @@ The project does not uses any external ML/DL libraries such as:
 Clone the repository and move into its root directory:
 
 ```bash
-git clone https://github.com/prajalpatidar0406/Morpheus-Assignment-2.1-Programming-Task-1-.git
-cd Morpheus-Assignment-2.1-Programming-Task-1-
+git clone https://github.com/LadManthan/ManthanLad_Assignment2.2-Part2.git
+cd ManthanLad_Assignment2.2-Part2
 ```
 
 Create and activate a virtual environment.
 
-**macOS / Linux**
+**Linux**
 
 ```bash
 python -m venv .venv
@@ -98,18 +124,21 @@ source .venv/bin/activate
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\activate
+.\.venv\Scripts\Activate.ps1
 ```
 
 Install the package and development dependencies:
 
 ```bash
 python -m pip install -r requirements-dev.txt
-python -m pip install .
-python -m pip install jupyter
+python -m pip install -e .
 ```
 
-The installed package is named `numcompute` and can be imported from Python scripts or Jupyter notebooks.
+The project provides the `numcompute` and `numcompute_stream` packages. Install Jupyter separately if you want to run the notebooks:
+
+```bash
+python -m pip install jupyter
+```
 
 ---
 
@@ -164,16 +193,19 @@ Binary search returns the insertion index and whether the value exists.
 
 ### `rank.py` - Ranking and percentile
 
-`rank(data, method="average")` supports the `average`, `dense`, and `ordinal` ranking methods and handles tied values.
+`Ranker.rank(data, method="average")` supports the `average`, `dense`, and `ordinal` ranking methods and handles tied values.
 
 ```python
-rank(data, method="average")
+from numcompute.rank import Ranker
+
+ranker = Ranker()
+ranker.rank(data, method="average")
 ```
 
 Percentile interpolation supports `linear`, `lower`, `higher`, and `midpoint` methods.
 
 ```python
-percentile(data, q, interpolation="linear")
+ranker.percentile(data, q, interpolation="linear")
 ```
 
 ---
@@ -256,7 +288,7 @@ fit(X, y)
 predict(X)
 ```
 
-No machine learning model implementation is used.
+The batch package does not include a built-in estimator; the streaming package includes a buffered `DecisionTreeClassifier`.
 
 The module also provides pipeline chaining, `Compose` for sequential
 transformers, and `FeatureUnion` for concatenating independent feature outputs.
@@ -281,6 +313,12 @@ Utilities should only be added here when they are genuinely reusable across mult
 
 ---
 
+### `histogram_display.py` — Histogram display
+
+`display_histogram(heights, edges, density=False)` displays precomputed histogram values in Jupyter. It returns `False` when called outside a notebook.
+
+---
+
 ### `benchmarking.py` — Performance measurement
 
 Contains reusable micro-benchmarking functionality for measuring implementation performance.
@@ -289,6 +327,31 @@ Contains reusable micro-benchmarking functionality for measuring implementation 
 mean elapsed times in seconds plus Python, NumPy, OS/platform, processor, and
 CPU-count metadata. `compare()` benchmarks named implementations with shared
 arguments, and `format_table()` renders timing and environment information.
+
+---
+
+## Streaming package
+
+The `numcompute_stream` package provides streaming counterparts for CSV loading, preprocessing, sorting/searching, ranking, statistics, metrics, optimization, pipelines, utilities, and benchmarking. Streaming preprocessors and metrics maintain state across chunks; `Pipeline.partial_fit` passes each chunk through incrementally updated steps.
+
+The package also provides:
+
+* `DecisionTreeClassifier` — a depth-limited classifier that buffers chunks and periodically retrains.
+* `StreamTrainer` — processes chunks using test-then-train evaluation and records timing, memory, retrain counts, and accuracy history.
+* `visualise.py` — plots streaming metrics, compares models, displays predictions against ground truth, and draws decision trees.
+
+Example:
+
+```python
+from numcompute_stream.stream import StreamTrainer
+from numcompute_stream.tree import DecisionTreeClassifier
+
+model = DecisionTreeClassifier(buffer_size=100)
+trainer = StreamTrainer(model, window_size=5)
+trainer.run(chunks)  # iterable of (X_chunk, y_chunk) pairs
+
+rolling_accuracy = trainer.history("rolling_accuracy")
+```
 
 ---
 
@@ -306,19 +369,20 @@ Run an individual test file when focusing on a particular module. For example:
 python -m pytest tests/test_optim.py
 ```
 
-The tests cover normal usage, boundary conditions, invalid inputs, empty arrays, duplicate and tied values, NaN handling, input shapes, top-k boundary values, non-contiguous arrays, and chunked data processing.
+The tests cover the batch modules and streaming functionality, including boundary conditions, invalid inputs, empty arrays, duplicate and tied values, NaN handling, input shapes, top-k limits, and chunked processing.
 
 ---
 
 # Demo
 
-The end-to-end demonstration is located at:
+The demonstrations are in:
 
 ```text
 demo/quickstart.ipynb
+demo/stream_demo.ipynb
 ```
 
-Open `demo/quickstart.ipynb` and run the cells in order.The demo demonstrates the implemented functionality, including:
+Open either notebook in Jupyter and run the cells in order. `quickstart.ipynb` demonstrates the batch API, including:
 
 1. CSV loading
 2. Preprocessing
@@ -329,11 +393,11 @@ Open `demo/quickstart.ipynb` and run the cells in order.The demo demonstrates th
 7. Pipeline usage
 8. Benchmark results
 
----
+`stream_demo.ipynb` demonstrates chunked loading, incremental preprocessing and model training, stream evaluation, and visualisation.
 
 # Benchmark
 
-The quickstart notebook compares implementations, particularly:
+The benchmark script and notebook compare implementations, particularly:
 
 ```text
 Python loops
@@ -341,24 +405,19 @@ Python loops
 NumPy vectorised implementations
 ```
 
-The notebook uses a seeded 200,000-element input, one warm-up, and five timed repeats. Its results include median and minimum seconds and the runtime environment. Measurements depend on machine and system load; rerun to measure your system. `format_table(compare(...))` generates current results rather than relying on fixed timing claims.
 
-Example local measurement (Python 3.13.7, NumPy 2.5.4, macOS 27.0.1,
-arm64, 10 reported CPUs; seeded 200,000-element input, one warm-up and five
-timed repeats):
+Use `python benchmark/benchmark.py --help` to see the benchmark script options. Results depend on input size, software versions, hardware, and system load.
 
-| Implementation | Median (s) | Minimum (s) |
-|---|---:|---:|
-| Python loop | 0.00737 | 0.00692 |
-| NumPy vectorised | 0.0000735 | 0.0000306 |
+The loop-versus-NumPy benchmark checks that each implementation produces the same result, then measures each five times after one warm-up run. The following medians were measured on Windows 10 with Python 3.11.0 and NumPy 2.4.4:
+
+| Calculation | Input size | Python loop (s) | NumPy vectorised (s) | Median speedup |
+|---|---:|---:|---:|---:|
+| Pairwise distances | 200 x 150 points, 10 features | 0.067501 | 0.003093 | 21.8x |
+| Gini impurity | 20,000 rows x 5 classes | 0.038086 | 0.003515 | 10.8x |
+| Best split threshold | 5,000 samples | 0.020707 | 0.001284 | 16.1x |
+| Running mean and variance | 20,000 rows x 8 features | 0.090385 | 0.006230 | 14.5x |
+| Confusion matrix | 100,000 labels, 5 classes | 0.015431 | 0.011158 | 1.4x |
+
+These are hardware-specific measurements; rerun the benchmark on your system to obtain current results.
 
 ---
-
-# Project Team
-
-| Team Member   | Main Contribution |
-| -------- | ----------------- |
-| Prajal Patidar | io.py (shared contribution), optim.py, benchmarking.py, utils.py, pipeline.py, and project integration |
-| Manthan Lad | stats.py, metrics.py, display_histogram.py, and technical report |
-| Mansi Khare | io.py (shared contribution), rank.py, and presentation |
-| Sarthak Sharma | preprocessing.py, sort_search.py, and technical report |
